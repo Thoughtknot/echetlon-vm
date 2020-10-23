@@ -296,6 +296,15 @@ void store_obj_arg(VirtualMachine* vm, uint64_t address, uint64_t arg_value, Obj
     }
 }
 
+void return_from_method(VirtualMachine* vm) {
+    Callstack* current = vm->callstack;
+    vm->callstack = current->prev;
+    current->prev = NULL;
+    free(current->current->program);
+    free(current->current);
+    free(current);
+}
+
 void run_method(VirtualMachine* vm, Method* method, ObjDef* def) {
     Callstack* stack = (Callstack*) malloc(sizeof(Callstack));
     stack->current = (StackFrame*) malloc(sizeof(StackFrame));
@@ -325,6 +334,10 @@ void jumps(VirtualMachine* vm, uint8_t opcode) {
             printf("Running method: obj: %d meth: %d \n", obj_id, method_id);
             fflush(stdout);
             run_method(vm, method, def);
+            break;
+        }
+        case RET: {
+            return_from_method(vm);
             break;
         }
         case JMP: {
